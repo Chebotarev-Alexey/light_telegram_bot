@@ -7,7 +7,7 @@ requirements = ["aiohttp>=3.8.0,<3.9.0"]
  
 setuptools.setup( 
 	name="light_telegram_bot", 
-    version="0.0.1",
+    version="0.0.2",
 	author="Alexey Chebotarev", 
     author_email="alexey.p.chebotarev@gmail.com",
 	description="Light python module for telegram bot api", 

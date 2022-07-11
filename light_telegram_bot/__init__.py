@@ -1,1 +1,1 @@
-from main import *
+from light_telegram_bot.main import *

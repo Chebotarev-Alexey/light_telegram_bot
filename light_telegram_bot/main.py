@@ -58,9 +58,9 @@ class Bot:
         if number in self._http_exceptions:
             return self._http_exceptions[number]
         else:
-            obj = type(f"TelegramError{number}", (TelegramError,), {})
-            self._http_exceptions[number] = obj
-            return obj
+            HttpException = type(f"TelegramError{number}", (TelegramError,), {})
+            self._http_exceptions[number] = HttpException
+            return HttpException
 
 
 class BotPolling:

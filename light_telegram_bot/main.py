@@ -1,3 +1,4 @@
+from traceback import print_exc
 import aiohttp
 from typing import Union
 from types import MethodType
@@ -42,11 +43,12 @@ class Bot:
         async def function(bot, **kwargs):
             async with bot._session.get(url, params=kwargs) as response:
                 response_data = await response.json()
-                response_object = _BotObject(response_data)
-                if response_object.ok:
-                    return response_object.result
+                if response_data["ok"]:
+                    return response_data["result"]
                 else:
-                    raise bot.get_http_exception(response_object.error_code)(response_object.description)
+                    raise bot.get_http_exception(response_data["error_code"])(
+                    response_data["description"]
+                    )
 
         function.__name__ = attr
         function.__qualname__ = self.__class__.__qualname__ + "." + attr
@@ -74,7 +76,7 @@ class BotPolling:
             while 1:
                 updates = await self._bot.get_updates(timeout=timeout, offset=self._offset, **kwargs)
                 if updates:
-                    self._offset = updates[-1].update_id+1
+                    self._offset = updates[-1]["update_id"]+1
                 for update in updates:
                     for handler in self._handlers:
                         try:
@@ -84,53 +86,9 @@ class BotPolling:
                         else:
                             break
         except Exception:
+            print_exc()
             raise LightTelegramBotPollingError()
                 
     def handler(self, f):
         self._handlers.append(f)
     
-class _BotObject:
-    def __init__(self, scheme: Union[dict, list]):
-        self._scheme = scheme
-        self._cache = {}
-
-    @classmethod
-    def create_new_object(cls, value):
-        if isinstance(value, (dict, list)):
-            new_object = cls(value)
-        else:
-            new_object = value
-        return new_object
-    
-    def __str__(self):
-        return str(self._scheme)
-
-    def __getattr__(self, attr: str):
-        if attr.endswith("_"):
-            attr = attr[:-1]
-        if attr in self._cache:
-            return self._cache[attr]
-        try:
-            value = self._scheme[attr]
-        except KeyError:
-            return super().__getattribute__(attr)
-
-        new_object = self.create_new_object(value)
-        self._cache[attr] = new_object
-        return new_object
-
-    def __getitem__(self, item: int):
-        if not isinstance(item, int):
-            raise TypeError()
-
-        if item in self._cache:
-            return self._cache[item]
-
-        value = self._scheme[item]
-
-        new_object = self.create_new_object(value)
-        self._cache[item] = new_object
-        return new_object
-    
-    def __bool__(self):
-        return bool(self._scheme)
